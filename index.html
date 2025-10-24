@@ -1,58 +1,93 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>M/M/1 Queue Calculator</title>
+  <title>Queue Calculator (M/M/1, M/M/c)</title>
   <link rel="stylesheet" href="src/style.css" />
 </head>
 <body>
   <main class="container">
-    <h1>M/M/1 Queue Calculator</h1>
-    <p>Compute steady-state performance for a single-server queue with Poisson arrivals and exponential service.</p>
+    <header class="hero">
+      <h1>Queue Calculator</h1>
+      <p class="subtitle">Poisson arrivals · Exponential service · Steady-state metrics</p>
+    </header>
 
-    <form id="calc-form">
-      <div class="row">
-        <label for="lambda">Arrival rate (λ)</label>
-        <input id="lambda" name="lambda" type="number" step="any" min="0" required placeholder="e.g., 2.5" />
-      </div>
-      <div class="row">
-        <label for="mu">Service rate (μ)</label>
-        <input id="mu" name="mu" type="number" step="any" min="0" required placeholder="e.g., 3.5" />
-      </div>
-      <button type="submit">Calculate</button>
-      <p class="hint">Constraint: 0 ≤ λ &lt; μ (so ρ = λ/μ &lt; 1)</p>
-    </form>
+    <section class="panel">
+      <form id="calc-form">
+        <div class="row">
+          <label>모델</label>
+          <div class="segmented" role="tablist" aria-label="Queue model">
+            <input type="radio" id="model-mm1" name="model" value="mm1" checked />
+            <label for="model-mm1">M/M/1</label>
+            <input type="radio" id="model-mmc" name="model" value="mmc" />
+            <label for="model-mmc">M/M/c</label>
+          </div>
+        </div>
 
-    <section id="error" class="error hidden"></section>
+        <div class="row">
+          <label for="lambda">도착률 λ</label>
+          <input id="lambda" name="lambda" type="number" inputmode="decimal" step="any" min="0" required placeholder="예: 2.5" />
+        </div>
 
-    <section id="results" class="card hidden">
-      <h2>Results</h2>
-      <div class="grid">
-        <div><strong>Utilization ρ</strong><div id="rho"></div></div>
-        <div><strong>L (in system)</strong><div id="L"></div></div>
-        <div><strong>L<sub>q</sub> (in queue)</strong><div id="Lq"></div></div>
-        <div><strong>W (time in system)</strong><div id="W"></div></div>
-        <div><strong>W<sub>q</sub> (waiting time)</strong><div id="Wq"></div></div>
-        <div><strong>P<sub>0</sub></strong><div id="P0"></div></div>
+        <div class="row">
+          <label for="mu">서비스율 μ</label>
+          <input id="mu" name="mu" type="number" inputmode="decimal" step="any" min="0" required placeholder="예: 3.5" />
+        </div>
+
+        <div class="row" id="servers-row" hidden>
+          <label for="servers">서버 수 c</label>
+          <input id="servers" name="servers" type="number" inputmode="numeric" step="1" min="1" value="2" />
+        </div>
+
+        <div class="row">
+          <label for="units">단위</label>
+          <div class="select-wrap">
+            <select id="units" name="units">
+              <option value="per_hour">건/시간</option>
+              <option value="per_min">건/분</option>
+              <option value="per_sec">건/초</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="submit">계산하기</button>
+          <span class="hint">안정 조건: M/M/1은 λ &lt; μ, M/M/c는 λ &lt; c·μ (즉 ρ &lt; 1)</span>
+        </div>
+      </form>
+      <div id="error" class="error hidden" role="alert"></div>
+    </section>
+
+    <section id="results" class="card hidden" aria-live="polite">
+      <h2>결과</h2>
+      <div class="metrics">
+        <div class="metric"><div class="k">모델</div><div class="v" id="out-model">—</div></div>
+        <div class="metric"><div class="k">서버 수 c</div><div class="v" id="out-c">—</div></div>
+        <div class="metric"><div class="k">이용률 ρ</div><div class="v" id="rho">—</div></div>
+
+        <div class="metric"><div class="k">L (시스템 내 평균 수)</div><div class="v" id="L">—</div></div>
+        <div class="metric"><div class="k">L<sub>q</sub> (대기열 평균 수)</div><div class="v" id="Lq">—</div></div>
+        <div class="metric"><div class="k">W (시스템 평균 시간)</div><div class="v" id="W">—</div></div>
+        <div class="metric"><div class="k">W<sub>q</sub> (대기열 평균 대기시간)</div><div class="v" id="Wq">—</div></div>
+
+        <div class="metric"><div class="k">P<sub>0</sub> (유휴 확률)</div><div class="v" id="P0">—</div></div>
+        <div class="metric"><div class="k">P<sub>w</sub> (대기 발생 확률)</div><div class="v" id="Pw">—</div></div>
       </div>
-      <details>
-        <summary>Show formulae</summary>
-        <ul>
-          <li>ρ = λ / μ</li>
-          <li>L = ρ / (1 − ρ)</li>
-          <li>L<sub>q</sub> = ρ² / (1 − ρ)</li>
-          <li>W = 1 / (μ − λ)</li>
-          <li>W<sub>q</sub> = ρ / (μ − λ)</li>
-          <li>P<sub>0</sub> = 1 − ρ</li>
-        </ul>
+
+      <details class="formulae">
+        <summary>공식 보기</summary>
+        <div id="formulae-content">
+          <!-- app.js에서 모델에 따라 내용 채움 -->
+        </div>
       </details>
     </section>
 
-    <footer>
-      <p>Built with vanilla JS. <a href="https://github.com/YOUR-USER/queue-calculator">Source on GitHub</a>.</p>
+    <footer class="footer">
+      <p>Built with vanilla JS · <a id="repo-link" href="#" target="_blank" rel="noopener">GitHub</a></p>
     </footer>
   </main>
+
   <script type="module" src="src/app.js"></script>
 </body>
 </html>
