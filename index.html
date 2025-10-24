@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>M/M/1 Queue Calculator</title>
+  <link rel="stylesheet" href="src/style.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>M/M/1 Queue Calculator</h1>
+    <p>Compute steady-state performance for a single-server queue with Poisson arrivals and exponential service.</p>
+
+    <form id="calc-form">
+      <div class="row">
+        <label for="lambda">Arrival rate (λ)</label>
+        <input id="lambda" name="lambda" type="number" step="any" min="0" required placeholder="e.g., 2.5" />
+      </div>
+      <div class="row">
+        <label for="mu">Service rate (μ)</label>
+        <input id="mu" name="mu" type="number" step="any" min="0" required placeholder="e.g., 3.5" />
+      </div>
+      <button type="submit">Calculate</button>
+      <p class="hint">Constraint: 0 ≤ λ &lt; μ (so ρ = λ/μ &lt; 1)</p>
+    </form>
+
+    <section id="error" class="error hidden"></section>
+
+    <section id="results" class="card hidden">
+      <h2>Results</h2>
+      <div class="grid">
+        <div><strong>Utilization ρ</strong><div id="rho"></div></div>
+        <div><strong>L (in system)</strong><div id="L"></div></div>
+        <div><strong>L<sub>q</sub> (in queue)</strong><div id="Lq"></div></div>
+        <div><strong>W (time in system)</strong><div id="W"></div></div>
+        <div><strong>W<sub>q</sub> (waiting time)</strong><div id="Wq"></div></div>
+        <div><strong>P<sub>0</sub></strong><div id="P0"></div></div>
+      </div>
+      <details>
+        <summary>Show formulae</summary>
+        <ul>
+          <li>ρ = λ / μ</li>
+          <li>L = ρ / (1 − ρ)</li>
+          <li>L<sub>q</sub> = ρ² / (1 − ρ)</li>
+          <li>W = 1 / (μ − λ)</li>
+          <li>W<sub>q</sub> = ρ / (μ − λ)</li>
+          <li>P<sub>0</sub> = 1 − ρ</li>
+        </ul>
+      </details>
+    </section>
+
+    <footer>
+      <p>Built with vanilla JS. <a href="https://github.com/YOUR-USER/queue-calculator">Source on GitHub</a>.</p>
+    </footer>
+  </main>
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>

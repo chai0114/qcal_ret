@@ -1,0 +1,13 @@
+{
+  "name": "queue-calculator",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "build": "cp -r index.html src dist/",
+    "deploy": "echo Nothing to build for static site"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
