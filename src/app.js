@@ -6,7 +6,6 @@ const results = document.getElementById("results");
 const serversRow = document.getElementById("servers-row");
 const repoLink = document.getElementById("repo-link");
 
-// 결과 필드
 const out = {
   model: document.getElementById("out-model"),
   c: document.getElementById("out-c"),
@@ -21,7 +20,7 @@ const out = {
 
 const formulae = document.getElementById("formulae-content");
 
-// 모델 라디오 토글 시 서버 입력 표시
+// Toggle server input for M/M/c
 document.getElementById("model-mm1").addEventListener("change", onModelToggle);
 document.getElementById("model-mmc").addEventListener("change", onModelToggle);
 function onModelToggle() {
@@ -30,13 +29,13 @@ function onModelToggle() {
 }
 onModelToggle();
 
-// 레포 링크 자동 설정 (선택)
+// Auto-set repo link
 try {
   const path = window.location.pathname.replace(/^\//, "");
   const repoGuess = path.split("/")[0] || "queue-calculator";
   const userGuess = window.location.hostname.split(".")[0];
   repoLink.href = `https://github.com/${userGuess}/${repoGuess}`;
-} catch { /* noop */ }
+} catch { /* ignore */ }
 
 form.addEventListener("submit", (e) => {
   e.preventDefault();
@@ -50,22 +49,19 @@ form.addEventListener("submit", (e) => {
   const cVal   = document.getElementById("servers").value;
   const c      = cVal ? parseInt(cVal, 10) : 1;
 
-  // 기본 검증
   if (!isFinite(lambda) || !isFinite(mu)) {
-    return showError("λ, μ에 숫자를 입력해 주세요.");
+    return showError("Please enter numeric values for λ and μ.");
   }
   if (mu <= 0 || lambda < 0) {
-    return showError("λ ≥ 0, μ > 0 이어야 합니다.");
+    return showError("Require λ ≥ 0 and μ > 0.");
   }
   if (model === "mmc" && (!Number.isInteger(c) || c < 1)) {
-    return showError("서버 수 c는 1 이상의 정수여야 합니다.");
+    return showError("Number of servers c must be an integer ≥ 1.");
   }
 
-  // 계산
   const res = model === "mmc" ? computeMMC(lambda, mu, c) : computeMM1(lambda, mu);
   if (!res.ok) return showError(res.reason);
 
-  // 출력
   out.model.textContent = res.model;
   out.c.textContent     = res.c;
   out.rho.textContent   = fmt(res.rho);
@@ -76,7 +72,6 @@ form.addEventListener("submit", (e) => {
   out.P0.textContent    = fmt(res.P0);
   out.Pw.textContent    = fmt(res.Pw);
 
-  // 공식 섹션
   formulae.innerHTML = model === "mmc"
     ? mmcFormulaeHTML()
     : mm1FormulaeHTML();
@@ -84,54 +79,53 @@ form.addEventListener("submit", (e) => {
   show(results);
 });
 
-// ------- helpers -------
-function getModel(){
+function getModel() {
   return document.querySelector('input[name="model"]:checked').value;
 }
-function showError(msg){
+function showError(msg) {
   errorBox.textContent = msg;
   show(errorBox);
 }
-function show(el){ el.classList.remove("hidden"); }
-function hide(el){ el.classList.add("hidden"); }
-function timeUnit(sel){
-  switch(sel){
-    case "per_hour": return " 시간";
-    case "per_min":  return " 분";
-    case "per_sec":  return " 초";
+function show(el) { el.classList.remove("hidden"); }
+function hide(el) { el.classList.add("hidden"); }
+function timeUnit(sel) {
+  switch (sel) {
+    case "per_hour": return " hours";
+    case "per_min":  return " minutes";
+    case "per_sec":  return " seconds";
     default: return "";
   }
 }
 
-// 공식 HTML
-function mm1FormulaeHTML(){
+// ---------- Formulas (English) ----------
+function mm1FormulaeHTML() {
   return `
   <ul>
-    <li>안정 조건: <code>λ &lt; μ</code></li>
-    <li>이용률: <code>ρ = λ / μ</code></li>
-    <li>유휴 확률: <code>P₀ = 1 − ρ</code></li>
-    <li>대기 발생 확률: <code>P_w = ρ</code></li>
-    <li>평균 대기시간: <code>W_q = P_w / (μ − λ) = ρ / (μ − λ)</code></li>
-    <li>평균 시스템시간: <code>W = W_q + 1/μ</code></li>
-    <li>평균 대기열 길이: <code>L_q = λ · W_q</code></li>
-    <li>평균 시스템 내 수: <code>L = λ · W</code></li>
+    <li>Stability: <code>λ &lt; μ</code></li>
+    <li>Utilization: <code>ρ = λ / μ</code></li>
+    <li>Idle probability: <code>P₀ = 1 − ρ</code></li>
+    <li>Waiting probability: <code>P_w = ρ</code></li>
+    <li>Average waiting time: <code>W_q = P_w / (μ − λ) = ρ / (μ − λ)</code></li>
+    <li>Average system time: <code>W = W_q + 1/μ</code></li>
+    <li>Average queue length: <code>L_q = λ · W_q</code></li>
+    <li>Average system size: <code>L = λ · W</code></li>
   </ul>`;
 }
 
-function mmcFormulaeHTML(){
+function mmcFormulaeHTML() {
   return `
   <ul>
-    <li>안정 조건: <code>λ &lt; c·μ</code> (즉 <code>ρ = λ/(cμ) &lt; 1</code>)</li>
-    <li>제로상태 확률:
-      <div><code>P₀ = \[ \sum_{n=0}^{c-1} \frac{a^n}{n!} + \frac{a^c}{c!(1-ρ)} \]^{-1}</code>, 
-      <small>여기서 <code>a = λ/μ</code>, <code>ρ = a/c</code></small></div>
+    <li>Stability: <code>λ &lt; c·μ</code> (i.e. <code>ρ = λ / (cμ) &lt; 1</code>)</li>
+    <li>Zero-state probability:
+      <div><code>P₀ = \[ Σₙ₌₀^{c−1} (aⁿ / n!) + (aᶜ / [c!(1−ρ)]) \]⁻¹</code>,
+      where <code>a = λ/μ</code>, <code>ρ = a / c</code></div>
     </li>
-    <li>Erlang C (대기 발생 확률):
-      <div><code>P_w = \frac{a^c}{c!(1-ρ)} · P₀</code></div>
+    <li>Erlang C (waiting probability):
+      <div><code>P_w = (aᶜ / [c!(1−ρ)]) · P₀</code></div>
     </li>
-    <li>평균 대기시간: <code>W_q = P_w / (cμ − λ)</code></li>
-    <li>평균 시스템시간: <code>W = W_q + 1/μ</code></li>
-    <li>평균 대기열 길이: <code>L_q = λ · W_q</code></li>
-    <li>평균 시스템 내 수: <code>L = λ · W</code></li>
+    <li>Average waiting time: <code>W_q = P_w / (cμ − λ)</code></li>
+    <li>Average system time: <code>W = W_q + 1/μ</code></li>
+    <li>Average queue length: <code>L_q = λ · W_q</code></li>
+    <li>Average system size: <code>L = λ · W</code></li>
   </ul>`;
 }
